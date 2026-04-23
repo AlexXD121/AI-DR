@@ -15,13 +15,8 @@ if not GEMINI_API_KEY:
 # Initialize the Gemini client (new google-genai SDK)
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = (
-    "You are AI Doc, a trustworthy and empathetic AI medical assistant. "
-    "You help users understand their symptoms and provide preliminary health guidance. "
-    "Always remind users that you are not a substitute for a real doctor and recommend "
-    "consulting a healthcare professional for serious concerns. "
-    "Keep responses concise, clear, and easy to understand."
-)
+# Clinical doctor system prompt
+SYSTEM_PROMPT = """You are 'AI Doc', a highly professional, empathetic, and analytical medical AI assistant. Your goal is to simulate a clinical consultation. Guidelines: 1. Act like a real doctor: When a user presents a symptom, DO NOT immediately diagnose. Ask 1 or 2 clarifying questions first (e.g., duration, severity, accompanying symptoms). 2. Tone: Trustworthy, calm, clinical, yet empathetic. 3. Structure: Use short paragraphs and bullet points for readability. 4. Mandatory Disclaimer: Always end your advice by reminding the user that you are an AI and they MUST consult a real doctor for a real diagnosis."""
 
 router = APIRouter()
 
@@ -39,30 +34,43 @@ class ChatResponse(BaseModel):
 async def chat(request: ChatRequest):
     """
     Accepts a user message and conversation history,
-    and returns an AI-generated reply using Google Gemini 2.0 Flash.
+    and returns an AI-generated reply using Google Gemini 1.5 Flash.
+    Uses gemini-1.5-flash (higher free-tier quota than gemini-2.0-flash).
     """
     try:
         # Build conversation history in the new SDK format
         history = []
         for item in request.history:
             role = item.get("role", "user")
-            text = item.get("parts", [""])[0] if item.get("parts") else ""
+            # parts can be a list of strings or dicts
+            raw_parts = item.get("parts", [""])
+            if raw_parts and isinstance(raw_parts[0], dict):
+                text = raw_parts[0].get("text", "")
+            else:
+                text = raw_parts[0] if raw_parts else ""
             history.append(types.Content(role=role, parts=[types.Part(text=text)]))
 
-        # Create a chat session and send the message
+        # Create a chat session with clinical config
+        # Using gemini-1.5-flash: better free-tier quota than gemini-2.0-flash
         chat_session = client.chats.create(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
-                temperature=0.7,
-                max_output_tokens=512,
+                temperature=0.3,          # Low temperature = focused, clinical responses
+                max_output_tokens=1024,   # Allow full bullet-pointed responses
             ),
             history=history,
         )
 
         response = chat_session.send_message(request.message)
-
         return ChatResponse(reply=response.text)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
+        # Surface the real error message to help debug
+        error_detail = str(e)
+        if "429" in error_detail or "RESOURCE_EXHAUSTED" in error_detail:
+            raise HTTPException(
+                status_code=429,
+                detail="API quota exceeded. Please wait a moment and try again, or check your Gemini API plan at https://aistudio.google.com"
+            )
+        raise HTTPException(status_code=500, detail=f"Gemini API error: {error_detail}")

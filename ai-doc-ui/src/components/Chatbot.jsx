@@ -1,17 +1,61 @@
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertTriangle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 // System welcome message shown on first load
 const WELCOME_MESSAGE = {
   id: 1,
   role: 'ai',
-  text: "Hello! I'm **AI Doc**, your AI-powered medical assistant 🩺\n\nI can help you understand symptoms, medications, and general health queries. How can I assist you today?\n\n> ⚠️ I provide preliminary guidance only. Always consult a real doctor for serious concerns.",
+  text: "Hello! I'm **AI Doc**, your AI-powered medical assistant 🩺\n\nI'm here to help you understand your symptoms through a clinical consultation. Please describe what you're experiencing, and I'll ask a few questions before offering guidance.\n\n> ⚠️ I provide preliminary guidance only. Always consult a real doctor for a formal diagnosis.",
+};
+
+// Custom markdown components styled for the medical chat UI
+const markdownComponents = {
+  // Paragraphs
+  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+
+  // Bold text
+  strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+
+  // Bullet lists
+  ul: ({ children }) => (
+    <ul className="mt-1 mb-2 space-y-1 pl-4 list-disc marker:text-blue-400">{children}</ul>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+
+  // Numbered lists
+  ol: ({ children }) => (
+    <ol className="mt-1 mb-2 space-y-1 pl-4 list-decimal marker:text-blue-400">{children}</ol>
+  ),
+
+  // Blockquote (used for disclaimers)
+  blockquote: ({ children }) => (
+    <blockquote className="mt-2 border-l-2 border-amber-400 bg-amber-50 pl-3 pr-2 py-1.5 rounded-r-lg text-amber-800 text-xs italic">
+      {children}
+    </blockquote>
+  ),
+
+  // Inline code
+  code: ({ children }) => (
+    <code className="bg-slate-100 text-blue-700 rounded px-1 py-0.5 text-xs font-mono">
+      {children}
+    </code>
+  ),
+};
+
+// User message markdown — white text on blue background
+const userMarkdownComponents = {
+  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  ul: ({ children }) => <ul className="mt-1 mb-2 space-y-1 pl-4 list-disc">{children}</ul>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
 };
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState(null); // tracks quota/connection errors
   const chatEndRef = useRef(null);
 
   // Auto-scroll to the latest message
@@ -20,12 +64,12 @@ export default function Chatbot() {
   }, [messages]);
 
   /**
-   * Converts the local message history into the format
-   * that the Gemini API expects: [{role, parts: [text]}]
+   * Converts local message history into the Gemini API format:
+   * [{ role: "user" | "model", parts: ["text"] }]
    */
   const buildHistory = (msgs) => {
     return msgs
-      .filter((m) => m.id !== 1) // exclude the static welcome message
+      .filter((m) => m.id !== 1) // exclude static welcome message
       .map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [m.text],
@@ -37,7 +81,9 @@ export default function Chatbot() {
     const trimmedInput = input.trim();
     if (!trimmedInput || isLoading) return;
 
-    // 1. Append user message to state immediately
+    setApiError(null); // clear any previous error banner
+
+    // 1. Append user message to UI immediately
     const userMsg = { id: Date.now(), role: 'user', text: trimmedInput };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
@@ -45,48 +91,68 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      // 2. API CALL to Python FastAPI backend
+      // 2. POST to Python FastAPI backend → /api/chat
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: trimmedInput,
-          history: buildHistory(messages), // send conversation history for context
+          history: buildHistory(messages),
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
+      // 3. Parse response
       const data = await response.json();
 
-      // 3. Append the AI reply to the chat
+      if (!response.ok) {
+        // Surface specific backend errors (e.g. 429 quota exceeded)
+        const errDetail = data?.detail || `Server error: ${response.status}`;
+        if (response.status === 429) {
+          setApiError('⏳ API quota exceeded. Please wait a moment and try again.');
+        } else {
+          setApiError(`❌ Backend error: ${errDetail}`);
+        }
+        throw new Error(errDetail);
+      }
+
+      // 4. Append AI reply to chat
       const aiMsg = { id: Date.now() + 1, role: 'ai', text: data.reply };
       setMessages((prev) => [...prev, aiMsg]);
+
     } catch (error) {
-      // 4. Show error message in chat on failure
-      const errMsg = {
-        id: Date.now() + 1,
-        role: 'ai',
-        text: `⚠️ I couldn't connect to the server. Please make sure the backend is running at http://localhost:8000.\n\nError: ${error.message}`,
-      };
-      setMessages((prev) => [...prev, errMsg]);
+      if (!apiError) {
+        // Network / connection failure (backend not running)
+        const errMsg = {
+          id: Date.now() + 1,
+          role: 'ai',
+          text: `**Connection Error** ⚠️\n\nCould not reach the backend server at \`http://localhost:8000\`.\n\n**To fix this**, open a terminal and run:\n\`\`\`\ncd backend\npython -m uvicorn main:app --reload --port 8000\n\`\`\`\n\n_Error details: ${error.message}_`,
+        };
+        setMessages((prev) => [...prev, errMsg]);
+      } else {
+        // Backend returned an error — show it in chat
+        const errMsg = {
+          id: Date.now() + 1,
+          role: 'ai',
+          text: `**I encountered an issue** ⚠️\n\n${apiError}`,
+        };
+        setMessages((prev) => [...prev, errMsg]);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[620px]">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[660px]">
+
       {/* ── Header ── */}
       <div className="bg-white border-b border-slate-100 px-5 py-4 flex items-center gap-3 flex-shrink-0">
         <div className="bg-blue-100 p-2 rounded-full">
           <Bot className="w-5 h-5 text-blue-600" />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-800 text-sm">AI Doc — Medical Chatbot</h2>
-          <p className="text-xs text-slate-400">Powered by Google Gemini</p>
+          <h2 className="font-semibold text-slate-800 text-sm">AI Doc — Clinical Consultation</h2>
+          <p className="text-xs text-slate-400">Powered by Google Gemini 1.5 Flash</p>
         </div>
         {/* Live indicator */}
         <div className="ml-auto flex items-center gap-1.5">
@@ -97,6 +163,15 @@ export default function Chatbot() {
           <span className="text-xs text-slate-400">Live</span>
         </div>
       </div>
+
+      {/* ── API Error Banner (quota / connection issues) ── */}
+      {apiError && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-xs flex-shrink-0">
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{apiError}</span>
+          <button onClick={() => setApiError(null)} className="ml-auto text-amber-500 hover:text-amber-700">✕</button>
+        </div>
+      )}
 
       {/* ── Chat History ── */}
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-5 bg-slate-50/40">
@@ -120,28 +195,33 @@ export default function Chatbot() {
 
             {/* Bubble */}
             <div
-              className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
+              className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
                 msg.role === 'user'
                   ? 'bg-blue-600 text-white rounded-br-sm'
                   : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'
               }`}
             >
-              {msg.text}
+              {/* ReactMarkdown renders bullet points, bold, blockquotes etc. */}
+              <ReactMarkdown
+                components={msg.role === 'user' ? userMarkdownComponents : markdownComponents}
+              >
+                {msg.text}
+              </ReactMarkdown>
             </div>
           </div>
         ))}
 
-        {/* Typing indicator */}
+        {/* Typing / thinking indicator */}
         {isLoading && (
           <div className="flex items-end gap-2.5">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center">
               <Bot className="w-4 h-4 text-blue-500" />
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></span>
               </div>
             </div>
           </div>
@@ -175,7 +255,7 @@ export default function Chatbot() {
           </button>
         </form>
         <p className="text-center text-[10px] text-slate-400 mt-2">
-          Not a substitute for professional medical advice. Consult a doctor for diagnosis.
+          Not a substitute for professional medical advice. Consult a licensed doctor for diagnosis.
         </p>
       </div>
     </div>
