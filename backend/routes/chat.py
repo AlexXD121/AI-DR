@@ -51,9 +51,9 @@ async def chat(request: ChatRequest):
             history.append(types.Content(role=role, parts=[types.Part(text=text)]))
 
         # Create a chat session with clinical config
-        # Using gemini-1.5-flash: better free-tier quota than gemini-2.0-flash
+        # Using gemini-2.0-flash-lite: lightest available model with lowest quota usage
         chat_session = client.chats.create(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash-lite",
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.3,          # Low temperature = focused, clinical responses
