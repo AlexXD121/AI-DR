@@ -1,4 +1,4 @@
-import { UploadCloud, AlertCircle, Clock } from 'lucide-react';
+import { Image as ImageIcon, AlertCircle, Clock, Heart } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SkinAnalyzer() {
@@ -54,28 +54,31 @@ export default function SkinAnalyzer() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="p-6 md:p-8">
+    <div className="bg-white rounded-[2rem] shadow-sm border border-stone-200 overflow-hidden">
+      <div className="p-8 md:p-10">
 
         {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Skin Disease Analyzer</h2>
-            <p className="text-slate-500 text-sm mt-1">
-              Upload a clear, well-lit image of the affected skin area for preliminary AI analysis.
+            <h2 className="text-2xl font-bold text-stone-800 flex items-center gap-2">
+              <Heart className="w-6 h-6 text-teal-500" />
+              Skin Check-up
+            </h2>
+            <p className="text-stone-600 text-base mt-2">
+              Upload a clear photo of your skin concern, and we'll help you figure out what it might be.
             </p>
           </div>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-xs font-semibold whitespace-nowrap">
-            <Clock className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 text-sm font-medium whitespace-nowrap">
+            <Clock className="w-4 h-4" />
             Coming Soon
           </span>
         </div>
 
         {/* Upload Zone */}
         <div
-          className={`relative border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-all duration-200 ease-in-out
-            ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}
-            ${selectedFile ? 'border-green-400 bg-green-50' : ''}
+          className={`relative border-2 border-dashed rounded-[2rem] p-12 flex flex-col items-center justify-center transition-all duration-300 ease-in-out
+            ${dragActive ? 'border-teal-400 bg-teal-50' : 'border-stone-300 bg-stone-50 hover:bg-stone-100'}
+            ${selectedFile ? 'border-teal-300 bg-teal-50/50' : ''}
           `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -97,40 +100,37 @@ export default function SkinAnalyzer() {
                   <img
                     src={previewUrl}
                     alt="Selected skin area preview"
-                    className="w-40 h-40 object-cover rounded-xl mb-4 border border-slate-200 shadow-sm"
+                    className="w-48 h-48 object-cover rounded-3xl mb-5 border-4 border-white shadow-md"
                   />
                 )}
-                <p className="text-slate-700 font-medium">{selectedFile.name}</p>
-                <p className="text-slate-400 text-xs mt-1">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                <div className="flex gap-2 mt-4">
+                <p className="text-stone-800 font-medium text-lg">{selectedFile.name}</p>
+                <p className="text-stone-500 text-sm mt-1">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                <div className="flex gap-3 mt-6">
                   <button
                     type="button"
-                    id="analyze-btn"
                     onClick={handleAnalyze}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-6 py-3 bg-teal-600 text-white text-base font-medium rounded-full hover:bg-teal-700 transition-colors shadow-sm"
                   >
-                    Analyze Image
+                    Check this photo
                   </button>
                   <button
                     type="button"
-                    id="remove-image-btn"
                     onClick={handleReset}
-                    className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200 transition-colors"
+                    className="px-6 py-3 bg-white border border-stone-200 text-stone-600 text-base font-medium rounded-full hover:bg-stone-50 transition-colors"
                   >
-                    Remove
+                    Choose different
                   </button>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                  <UploadCloud className="w-8 h-8 text-blue-500" />
+                <div className="bg-white p-5 rounded-full shadow-sm mb-5 border border-stone-100">
+                  <ImageIcon className="w-10 h-10 text-teal-400" />
                 </div>
-                <p className="text-slate-700 font-medium mb-1">Drag and drop an image here</p>
-                <p className="text-slate-500 text-sm">
-                  or <span className="text-blue-600 hover:underline">click to browse</span> from your device
+                <p className="text-stone-800 font-medium text-lg mb-1">Tap to select a photo</p>
+                <p className="text-stone-500 text-base">
+                  or just drag and drop it here
                 </p>
-                <p className="text-slate-400 text-xs mt-4">Supports JPG, PNG (Max 5MB)</p>
               </div>
             )}
           </label>
@@ -138,15 +138,17 @@ export default function SkinAnalyzer() {
 
         {/* Coming Soon Banner */}
         {showComingSoon && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
-            <Clock className="w-4 h-4 flex-shrink-0 text-amber-500" />
-            <span>
-              <strong>AI skin analysis is coming soon!</strong> This feature is under development.
-              In the meantime, use the <strong>AI Chatbot</strong> to describe your symptoms.
-            </span>
+          <div className="mt-6 flex items-start gap-4 p-5 bg-teal-50 border border-teal-100 rounded-3xl text-teal-800 text-base shadow-sm">
+            <Clock className="w-6 h-6 flex-shrink-0 text-teal-500 mt-0.5" />
+            <div className="flex-1">
+              <strong className="block mb-1 text-teal-900">Skin checks are coming soon!</strong>
+              We are carefully building this feature to be as helpful as possible. 
+              In the meantime, feel free to use the <strong>Chat</strong> to describe what you're noticing.
+            </div>
             <button
               onClick={() => setShowComingSoon(false)}
-              className="ml-auto text-amber-400 hover:text-amber-600 text-lg leading-none"
+              className="text-teal-400 hover:text-teal-600 transition-colors p-1"
+              aria-label="Close message"
             >
               ✕
             </button>
@@ -154,14 +156,11 @@ export default function SkinAnalyzer() {
         )}
 
         {/* Results Placeholder */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4">Analysis Results</h3>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center min-h-[150px]">
-            <AlertCircle className="w-8 h-8 text-slate-400 mb-3" />
-            <p className="text-slate-500 text-sm">
-              AI-powered skin analysis is coming soon.
-              <br />
-              Results will include potential conditions, confidence scores, and recommendations.
+        <div className="mt-10 pt-8 border-t border-stone-100">
+          <div className="bg-stone-50 border border-stone-200 rounded-[2rem] p-8 flex flex-col items-center justify-center text-center min-h-[160px]">
+            <AlertCircle className="w-10 h-10 text-stone-300 mb-4" />
+            <p className="text-stone-500 text-base max-w-sm">
+              When you upload a photo, we'll gently guide you through some possibilities and next steps.
             </p>
           </div>
         </div>

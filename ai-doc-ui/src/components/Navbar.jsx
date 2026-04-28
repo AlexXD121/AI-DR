@@ -1,43 +1,43 @@
-import { Stethoscope, MessageSquare, ScanSearch } from 'lucide-react';
+import { Stethoscope } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
   return (
-    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 border-b border-slate-200 shadow-sm transition-all duration-300">
+    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-stone-50/80 border-b border-stone-200 shadow-sm transition-all duration-300">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+        <div className="flex justify-between h-20 items-center">
           {/* Logo Section */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('chat')}>
-            <div className="bg-blue-500 p-2 rounded-lg text-white shadow-sm">
-              <Stethoscope className="w-5 h-5" />
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('chat')}>
+            <div className="bg-teal-500 p-2.5 rounded-2xl text-white shadow-sm">
+              <Stethoscope className="w-6 h-6" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800">
+            <span className="font-bold text-2xl tracking-tight text-stone-800">
               AI Doc
             </span>
           </div>
 
           {/* Nav Links */}
-          <div className="flex gap-2 sm:gap-4">
+          <div className="flex gap-2 sm:gap-4 bg-white p-1.5 rounded-full shadow-sm border border-stone-100">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center px-5 py-2.5 rounded-full text-base font-medium transition-all duration-300 ease-in-out ${
                 activeTab === 'chat'
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-teal-50 text-teal-700 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
               }`}
             >
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Chatbot</span>
+              <span className="mr-2 text-lg">💬</span>
+              Chat
             </button>
             <button
               onClick={() => setActiveTab('analyze')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center px-5 py-2.5 rounded-full text-base font-medium transition-all duration-300 ease-in-out ${
                 activeTab === 'analyze'
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-teal-50 text-teal-700 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
               }`}
             >
-              <ScanSearch className="w-4 h-4" />
-              <span className="hidden sm:inline">Analyze Skin Disease</span>
+              <span className="mr-2 text-lg">🔍</span>
+              Skin Check
             </button>
           </div>
         </div>
