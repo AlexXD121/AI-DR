@@ -64,14 +64,14 @@ export default function Chatbot() {
   }, [messages]);
 
   /**
-   * Converts local message history into the Gemini API format:
-   * [{ role: "user" | "model", parts: ["text"] }]
+   * Converts local message history into Groq/OpenAI format:
+   * [{ role: "user" | "assistant", content: "text" }]
    */
   const buildHistory = (msgs) => {
     return msgs
       .filter((m) => m.id !== 1) // exclude static welcome message
       .map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
+        role: m.role === 'user' ? 'user' : 'assistant',
         parts: [m.text],
       }));
   };
@@ -152,7 +152,7 @@ export default function Chatbot() {
         </div>
         <div>
           <h2 className="font-semibold text-slate-800 text-sm">AI Doc — Clinical Consultation</h2>
-          <p className="text-xs text-slate-400">Powered by Google Gemini 1.5 Flash</p>
+          <p className="text-xs text-slate-400">Powered by Groq / Llama 3.3</p>
         </div>
         {/* Live indicator */}
         <div className="ml-auto flex items-center gap-1.5">

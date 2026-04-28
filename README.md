@@ -4,7 +4,7 @@ A full-stack AI-powered medical assistant for college project.
 
 ## Tech Stack
 - **Frontend**: React 18 + Vite + Tailwind CSS + Lucide Icons
-- **Backend**: Python FastAPI + Google Gemini 2.0 Flash
+- **Backend**: Python FastAPI + Groq (Llama 3.3-70B)
 
 ## Features
 - 🩺 **AI Medical Chatbot** — Ask symptoms, get preliminary guidance (powered by Gemini)
@@ -37,11 +37,11 @@ npm run dev
 Open `http://localhost:5173`
 
 ## Environment Variables
-Create `backend/.env`:
+Create `backend/.env` (copy from `backend/.env.example`):
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
-Get a free API key at [aistudio.google.com](https://aistudio.google.com)
+Get a free API key at [console.groq.com](https://console.groq.com)
 
 ---
 > ⚠️ For educational purposes only. Not a substitute for professional medical advice.
