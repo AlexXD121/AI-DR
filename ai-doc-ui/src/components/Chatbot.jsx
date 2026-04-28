@@ -92,7 +92,7 @@ export default function Chatbot() {
 
     try {
       // 2. POST to Python FastAPI backend → /api/chat
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch('http://127.0.0.1:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,7 +125,7 @@ export default function Chatbot() {
         const errMsg = {
           id: Date.now() + 1,
           role: 'ai',
-          text: `**Connection Error** ⚠️\n\nCould not reach the backend server at \`http://localhost:8000\`.\n\n**To fix this**, open a terminal and run:\n\`\`\`\ncd backend\npython -m uvicorn main:app --reload --port 8000\n\`\`\`\n\n_Error details: ${error.message}_`,
+          text: `**Connection Error** ⚠️\n\nCould not reach the backend server at \`http://127.0.0.1:8000\`.\n\n**To fix this**, open a terminal and run:\n\`\`\`\ncd backend\npython -m uvicorn main:app --reload --host 127.0.0.1 --port 8000\n\`\`\`\n\n_Error details: ${error.message}_`,
         };
         setMessages((prev) => [...prev, errMsg]);
       } else {
