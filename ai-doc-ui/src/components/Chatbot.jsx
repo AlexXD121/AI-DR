@@ -238,6 +238,13 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
+      // Read health profile from localStorage to personalise AI responses
+      let patientProfile = null;
+      try {
+        const savedProfile = localStorage.getItem('ai-doc-health-profile');
+        if (savedProfile) patientProfile = JSON.parse(savedProfile);
+      } catch (_) {}
+
       // 2. POST to Python FastAPI backend
       const response = await fetch('http://127.0.0.1:8000/api/chat', {
         method: 'POST',
@@ -245,6 +252,7 @@ export default function Chatbot() {
         body: JSON.stringify({
           message: trimmedInput,
           history: buildHistory(messages),
+          patient_profile: patientProfile,
         }),
       });
 
@@ -416,6 +424,35 @@ export default function Chatbot() {
 
       {/* ── Input Area ── */}
       <div className="bg-white border-t border-stone-100 px-6 py-5 flex-shrink-0">
+
+        {/* Quick Suggestion Chips — only shown before first user message */}
+        {messages.length === 1 && (
+          <div className="flex gap-2 flex-wrap mb-4">
+            {[
+              '\uD83E\uDD15 I\'ve been having headaches recently',
+              '\uD83D\uDCA4 Can you analyse my sleep health?',
+              '\uD83D\uDE14 I feel constantly fatigued',
+              '\uD83E\uDDEA What does my BMI mean?',
+            ].map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => {
+                  const text = chip.replace(/^[\u{1F300}-\u{1FAD6}\s]+/u, '').trim();
+                  setInput(text);
+                  // auto-send via synthetic event
+                  setTimeout(() => {
+                    document.getElementById('chat-submit-btn')?.click();
+                  }, 50);
+                }}
+                className="px-4 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-full hover:bg-teal-100 hover:border-teal-300 transition-all"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="flex items-center gap-3">
           <input
             type="text"
@@ -451,6 +488,7 @@ export default function Chatbot() {
 
           <button
             type="submit"
+            id="chat-submit-btn"
             disabled={isLoading || !input.trim()}
             className="flex-shrink-0 w-14 h-14 bg-teal-600 hover:bg-teal-700 disabled:bg-stone-300 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
             aria-label="Send message"

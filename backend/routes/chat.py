@@ -47,7 +47,8 @@ router = APIRouter()
 # ── Request / Response Models ──────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
-    history: list[dict] = []  # [{"role": "user"|"assistant", "parts": ["text"]}]
+    history: list[dict] = []        # [{"role": "user"|"assistant", "content": "..."}]
+    patient_profile: dict | None = None  # optional health profile from localStorage
 
 
 class ChatResponse(BaseModel):
@@ -61,10 +62,42 @@ async def chat(request: ChatRequest):
     Accepts a user message and conversation history,
     and returns an AI-generated reply using Groq (Llama-3).
     """
-    logger.info(f"Incoming message: '{request.message[:80]}...' | history turns: {len(request.history)}")
+    logger.info(f"Incoming message: '{request.message[:80]}...' | history turns: {len(request.history)} | profile: {'yes' if request.patient_profile else 'no'}")
+
+    # ── Build dynamic system prompt ────────────────────────────────────────────
+    system_prompt = SYSTEM_PROMPT
+    if request.patient_profile:
+        profile = request.patient_profile
+        # Build a human-readable summary to inject
+        bmi = None
+        try:
+            h = float(profile.get('height', 0))
+            w = float(profile.get('weight', 0))
+            if h > 0 and w > 0:
+                bmi = round(w / ((h / 100) ** 2), 1)
+        except (ValueError, TypeError):
+            pass
+
+        profile_summary = (
+            f" Age: {profile.get('age', 'unknown')} years,"
+            f" Weight: {profile.get('weight', '?')} kg,"
+            f" Height: {profile.get('height', '?')} cm,"
+            f" BMI: {bmi if bmi else 'N/A'},"
+            f" Sleep: {profile.get('sleep', '?')} hours/night,"
+            f" Daily water intake: {profile.get('water', '?')} litres,"
+            f" Activity level: {profile.get('activity', 'unknown')}."
+        )
+        system_prompt += (
+            " IMPORTANT PATIENT CONTEXT: The user has provided the following health profile: "
+            + profile_summary
+            + " Use this context to provide highly personalised medical guidance."
+            " Reference their BMI, sleep hours, or water intake when directly relevant to their symptoms."
+            " Do NOT repeat all profile data back to the user — only mention fields that are relevant."
+        )
+        logger.info(f"Profile context appended — BMI: {bmi}")
 
     # ── Build message list ─────────────────────────────────────────────────────
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": system_prompt}]
 
     for item in request.history:
         role = item.get("role", "user")  # "user" or "assistant"
