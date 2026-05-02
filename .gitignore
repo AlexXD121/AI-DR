@@ -1,31 +1,97 @@
-# ===========================
+# ============================================================
 # AI Doc — Root .gitignore
-# ===========================
+# ============================================================
 
-# Python backend
-backend/__pycache__/
-backend/**/__pycache__/
-backend/*.pyc
-backend/*.pyo
-backend/.env           
-backend/uploads/
-backend/venv/
-backend/.venv/
-.venv/
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 *.egg-info/
-dist/
-build/
+*.egg
+.eggs/
 
-# Node / React frontend
+# ── Virtual Environments ───────────────────────────────────
+.venv/
+.venv312/
+venv/
+env/
+**/venv/
+**/.venv/
+**/.venv312/
+
+# ── Environment / Secrets ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+# Keep example files so others know what vars are needed
+!.env.example
+!backend/.env.example
+
+# ── Large AI Model Files (too big for GitHub) ──────────────
+*.pth
+*.pt
+*.h5
+*.hdf5
+*.keras
+*.pb
+*.onnx
+*.pkl
+*.joblib
+*.bin
+AI-Skin-Disease-Classifier/models/
+
+# ── Upload / Temp folders ──────────────────────────────────
+uploads/
+**/uploads/
+tmp/
+temp/
+
+# ── Node / React ───────────────────────────────────────────
+node_modules/
 ai-doc-ui/node_modules/
 ai-doc-ui/dist/
 ai-doc-ui/.vite/
+ai-doc-ui/coverage/
+dist/
+build/
 
-# OS files
+# ── Python Build Artifacts ─────────────────────────────────
+dist/
+build/
+*.spec
+
+# ── OS Files ───────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# IDE
+# ── IDE / Editor ───────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+.project
+.classpath
+
+# ── Logs ───────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+
+# ── Jupyter Notebooks checkpoints ──────────────────────────
+.ipynb_checkpoints/
+
+# ── pytest / coverage ──────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/

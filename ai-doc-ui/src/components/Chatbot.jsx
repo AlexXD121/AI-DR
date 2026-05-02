@@ -268,7 +268,7 @@ export default function Chatbot() {
         throw new Error(errDetail);
       }
 
-      // 4. Append AI reply to chat
+      // 3. Append AI reply to chat
       const aiMsg = { id: Date.now() + 1, role: 'ai', text: data.reply };
       setMessages((prev) => [...prev, aiMsg]);
 
